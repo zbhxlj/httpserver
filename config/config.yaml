@@ -3,3 +3,4 @@ server:
     listen_port: 8080
     index_directory: "/home/zbh/project/csWeb"
     thread_pool_num: 8
+    reserved_task_nums: 100

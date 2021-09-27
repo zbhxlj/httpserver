@@ -15,3 +15,6 @@ target_link_libraries(config_parser_test gtest yaml-cpp)
 
 add_executable(thread_test test/test.cpp test/thread_test.cpp src/thread.cpp src/count_down_latch.cpp)
 target_link_libraries(thread_test gtest pthread)
+
+add_executable(thread_pool_test test/test.cpp test/thread_pool_test.cpp src/thread.cpp src/thread_pool.cpp src/count_down_latch.cpp)
+target_link_libraries(thread_pool_test gtest pthread)
