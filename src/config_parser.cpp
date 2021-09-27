@@ -2,10 +2,10 @@
 #include <string>
 
 #include <yaml-cpp/yaml.h>
-#include "../include/config.h"
+#include "config.h"
 
-namespace web{
-    WebConfig LoadConfig(const std::string& config_file_path){
+namespace webserver{
+    WebConfig load_config(const std::string& config_file_path){
         YAML::Node config = YAML::LoadFile(config_file_path);
         return WebConfig(
             config["server"]["listen_addr"].as<std::string>(), 
