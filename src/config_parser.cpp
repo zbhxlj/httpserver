@@ -10,7 +10,8 @@ namespace webserver{
         return WebConfig(
             config["server"]["listen_addr"].as<std::string>(), 
             config["server"]["listen_port"].as<short>(),
-            config["server"]["index_directory"].as<std::string>()
+            config["server"]["index_directory"].as<std::string>(),
+            config["server"]["thread_pool_num"].as<int>()
         );
     } 
 }
