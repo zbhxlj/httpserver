@@ -2,13 +2,12 @@
 
 #include <string>
 #include <functional>
-#include <memory>
 #include "noncopyable.h"
 #include "count_down_latch.h"
 
 namespace webserver{
 
-class Thread : public Noncopyable, public std::enable_shared_from_this<Thread>{
+class Thread : public Noncopyable{
 
 public:
     using thread_func = std::function<void()>;

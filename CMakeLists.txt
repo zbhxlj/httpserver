@@ -2,7 +2,6 @@ cmake_minimum_required(VERSION 3.20)
 
 project(web_server)
 
-# find_package(spdlog REQUIRED)
 find_package(yaml-cpp REQUIRED)
 
 set(CMAKE_CXX_COMPILER "g++")

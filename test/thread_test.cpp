@@ -11,11 +11,11 @@ void thread_func(){
     ++value;
 }
 TEST(ThreadTest, plain){
-    std::vector<std::shared_ptr<webserver::Thread>> threads;
+    std::vector<std::unique_ptr<webserver::Thread>> threads;
     const int cnt = 100;
     
     for(int i = 0; i < cnt; i++){
-        threads.emplace_back(std::make_shared<webserver::Thread>(thread_func));
+        threads.emplace_back(std::make_unique<webserver::Thread>(thread_func));
     }
 
     for(const auto& thread : threads)
