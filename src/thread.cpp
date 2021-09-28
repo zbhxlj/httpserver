@@ -10,7 +10,7 @@ namespace webserver{
         :m_thread_func(std::move(func)),m_thread_name(std::move(name)), m_latch(1){
         int ret = pthread_create(&m_pthread_id, nullptr, &start, this);
         if(ret != 0){
-            spdlog::error("Failed to create threadpthread_create failed!");
+            spdlog::error("Failed to create thread. pthread_create failed!");
             abort();
         }
         m_latch.wait();

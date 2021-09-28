@@ -15,6 +15,7 @@ set(base
     src/count_down_latch.cpp
     src/thread_pool.cpp
     src/thread.cpp
+    src/socket.cpp
 )
 
 add_library(baselib STATIC ${base})
