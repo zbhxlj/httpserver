@@ -4,3 +4,4 @@ server:
     index_directory: "/home/zbh/project/csWeb"
     thread_pool_num: 8
     reserved_task_nums: 100
+    poll_timeout: 10000

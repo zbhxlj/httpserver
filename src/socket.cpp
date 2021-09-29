@@ -90,7 +90,7 @@ namespace webserver{
             if(write_bytes < 0){
                 if(errno == EAGAIN || errno == EWOULDBLOCK) break;
                 else if(errno == EINTR) continue;
-
+ 
                 buf.clear();
                 spdlog::warn("Write occured error {}", ::strerror(errno));
                 return -1;

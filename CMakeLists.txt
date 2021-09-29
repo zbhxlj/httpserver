@@ -18,10 +18,22 @@ set(base
     src/socket.cpp
 )
 
+set(event_loop
+    src/thread.cpp
+    src/count_down_latch.cpp
+    src/epoll.cpp
+    src/channel.cpp
+    src/event_loop.cpp
+    src/event_loop_thread.cpp
+    src/event_loop_thread_pool.cpp
+)
+
 add_library(baselib STATIC ${base})
+add_library(event_loop_lib STATIC ${event_loop})
 
 set(commonlib
     baselib
+    event_loop_lib
     gtest 
     yaml-cpp
     pthread
@@ -29,3 +41,6 @@ set(commonlib
 
 add_executable(base_test test/base_test.cpp)
 target_link_libraries(base_test ${commonlib})
+
+add_executable(epoll_test test/epoll_test.cpp)
+target_link_libraries(epoll_test ${commonlib})

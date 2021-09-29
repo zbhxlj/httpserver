@@ -4,7 +4,8 @@
 
 namespace webserver{
     ThreadPool::ThreadPool(size_t pool_size, size_t reserved_task_capacity)
-        : m_task_queue(reserved_task_capacity), m_thread_nums(pool_size), m_reserved_task_capacity(reserved_task_capacity){
+        : m_task_queue(reserved_task_capacity),m_is_running(false), 
+          m_thread_nums(pool_size), m_reserved_task_capacity(reserved_task_capacity){
             m_threads.reserve(pool_size);
         }
     
