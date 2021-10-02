@@ -67,5 +67,20 @@ private:
     static const int READ = EPOLLIN;
     static const int WRITE = EPOLLOUT;
 };
+struct ChannelHash{
+	std::size_t operator()(const std::shared_ptr<Channel> &key) const
+	{ 
+		return std::hash<int>()(key->get_fd());
+	}
+};
+
+struct ChannelCmp
+{
+	bool operator()(const std::shared_ptr<Channel> &lhs, 
+	                const std::shared_ptr<Channel> &rhs) const
+	{
+		return lhs->get_fd() < rhs->get_fd();
+	}
+};
 
 }

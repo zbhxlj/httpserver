@@ -45,6 +45,7 @@ set(commonlib
     baselib
     event_loop_lib
     http_lib
+    event_loop_lib
     gtest 
     yaml-cpp
     pthread

@@ -28,14 +28,11 @@ public:
     void handle_expire_event();
 
 private:
-    std::function<size_t(const std::shared_ptr<Channel>&)> channel_hash = [](const channel_ptr& channel){
-        return std::hash<int>()(channel -> get_fd());
-    };
     EventLoop* m_loop;
     std::unique_ptr<Timer> m_timer;
-    std::unordered_map<channel_ptr, http_handler_ptr, decltype(channel_hash)> m_http_map;
+    std::unordered_map<channel_ptr, http_handler_ptr, ChannelHash> m_http_map;
     std::list<entry> m_keep_alive_list;
-    std::unordered_set<channel_ptr, decltype(channel_hash)> m_keep_alive_set;
+    std::unordered_set<channel_ptr, ChannelHash> m_keep_alive_set;
 };
 
 }
