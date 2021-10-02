@@ -28,12 +28,18 @@ set(event_loop
     src/event_loop_thread_pool.cpp
 )
 
+set(http
+    src/timer.cpp
+    )
+
 add_library(baselib STATIC ${base})
 add_library(event_loop_lib STATIC ${event_loop})
+add_library(http_lib STATIC ${http})
 
 set(commonlib
     baselib
     event_loop_lib
+    http_lib
     gtest 
     yaml-cpp
     pthread
@@ -44,3 +50,6 @@ target_link_libraries(base_test ${commonlib})
 
 add_executable(epoll_test test/epoll_test.cpp)
 target_link_libraries(epoll_test ${commonlib})
+
+add_executable(http_test test/http_test.cpp)
+target_link_libraries(http_test ${commonlib})
