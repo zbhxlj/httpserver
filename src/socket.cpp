@@ -41,9 +41,9 @@ namespace webserver{
     }
 
     void TcpSocket::close(){
-        int ret = ::close(m_socket_fd);
-        if(ret < 0)
-            spdlog::warn("Unclean close! socket fd = {}", m_socket_fd);
+        // int ret = ::close(m_socket_fd);
+        // if(ret < 0)
+            // spdlog::warn("Unclean close! socket fd = {}", m_socket_fd);
     }
 
     void TcpSocket::shutdown(int type){
@@ -65,12 +65,12 @@ namespace webserver{
         while(true) {
             if((read_bytes = ::recv(m_socket_fd, buffer, MAX_BUF_SIZE, 0)) <= 0){
                 spdlog::info("read_bytes = {}, errno = {}", read_bytes, strerror(errno));
+                if(errno == EINTR) continue;
+                if(errno == EAGAIN || errno == EWOULDBLOCK) return { recv_bytes, false, read_buf };
                 if(read_bytes == 0){
                     return { recv_bytes, true, read_buf };
                 }
-                if(errno == EINTR) continue;
-                if(errno == EAGAIN || errno == EWOULDBLOCK) return { recv_bytes, false, read_buf };
-                return { recv_bytes, false, read_buf };
+                return { -1, false, read_buf };
             }
             recv_bytes += read_bytes;
             read_buf += std::string(buffer, read_bytes);

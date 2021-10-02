@@ -5,3 +5,4 @@ server:
     thread_pool_num: 8
     reserved_task_nums: 100
     poll_timeout: 10000
+    max_http_expire_time: 120
