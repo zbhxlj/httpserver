@@ -1,9 +1,11 @@
 #pragma once
 
-#include "event_loop_thread.h"
 #include <vector>
+#include <functional>
 namespace webserver{
 
+class EventLoop;
+class EventLoopThread;
 class EventLoopThreadPool{
 
 public :

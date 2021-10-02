@@ -2,6 +2,9 @@
 #include <sys/time.h>
 #include <cassert>
 #include "http_manager.h"
+#include "http_handler.h"
+#include "http_connection.h"
+#include "timer.h"
 
 namespace webserver {
 
@@ -14,11 +17,15 @@ namespace webserver {
     HttpManager::~HttpManager(){}
 
     void HttpManager::handler(channel_ptr& channel){
-        //TODO
+        if(channel->read_registered() && m_http_map.find(channel) != m_http_map.end()){
+            m_http_map[channel]->handle_http_request();
+        }
     }
 
-    void HttpManager::add_http_connection(http_handler_ptr &http_handler){
-        //TODO
+    void HttpManager::add_http_connection(http_handler_ptr &handler){
+        auto& channel = handler -> m_connection -> get_channel();
+        m_http_map.insert({channel, handler});
+        handler -> new_connection();
     }
 
     void HttpManager::del_http_connection(channel_ptr& channel){
@@ -56,14 +63,15 @@ namespace webserver {
 
         for(auto it = m_keep_alive_list.begin(); it != m_keep_alive_list.end(); it++){
             if(it -> second.tv_sec > time.tv_sec){
+                m_keep_alive_list.erase(m_keep_alive_list.begin(), it);
                 break;
             }
             if(m_keep_alive_set.find(it -> first) != m_keep_alive_set.end()){
                 m_keep_alive_set.erase(it -> first);
                 auto& handler = m_http_map[it -> first];
-                // TODO
+                handler -> m_connection -> set_state(HttpConnection::DisConnected);
+                handler -> m_connection -> handle_close();
             }
         }
     }
-     
 }

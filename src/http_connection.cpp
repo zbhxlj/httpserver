@@ -3,6 +3,7 @@
 #include "http_connection.h"
 #include "event_loop.h"
 #include "channel.h"
+#include "socket.h"
 
 namespace webserver{
     HttpConnection::HttpConnection(EventLoop* loop, TcpSocket conn_fd)

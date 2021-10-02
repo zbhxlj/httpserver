@@ -2,10 +2,10 @@
 #include "thread.h"
 #include <mutex>
 #include <condition_variable>
-#include "event_loop.h"
 #include "noncopyable.h"
 namespace webserver{
 
+class EventLoop;
 class EventLoopThread : public Noncopyable{
 
 public:

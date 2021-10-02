@@ -3,11 +3,14 @@
 #include <unordered_map>
 #include <unordered_set>
 #include <list>
-#include "timer.h"
+#include "channel.h"
 #include "noncopyable.h"
 namespace webserver{
 
 class HttpHandler;
+class EventLoop;
+class Channel;
+class Timer;
 class HttpManager : public Noncopyable{
 
 public:

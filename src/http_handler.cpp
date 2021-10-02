@@ -6,9 +6,38 @@
 #include <sys/stat.h>
 #include "http_handler.h"
 #include "http_connection.h"
+#include "event_loop.h"
 namespace webserver{ 
     const char* HttpHandler::Method[] = {"GET"};
     const char* HttpHandler::Version[] = {"HTTP/1.0", "HTTP/1.1"};
+
+    void HttpHandler::set_method(const std::string& method){
+        // now only support GET
+        if(method == Method[0]){
+            m_method = static_cast<HttpMethod>(0);
+        }
+        else {
+            spdlog::error("Method {} not suported", method);
+        }
+    }
+
+    void HttpHandler::set_url(const std::string& url){
+        m_url = url;
+    }
+
+    void HttpHandler::set_version(const std::string& version){
+        // only support HTTP/1.0 HTTP/1.1 
+        for(int i = 0; i < 2; i++){
+            if(version == Version[i]){
+                m_version = static_cast<HttpVersion>(i);
+            }
+        }
+        spdlog::error("Not supported version {}", version);
+    }
+
+    void HttpHandler::set_header(const std::string& key, const std::string& value){ 
+        m_headers[key] = value;
+    }
 
     HttpHandler::HttpHandler(EventLoop* loop, TcpSocket conn_fd)
     :m_loop(loop), m_conn_fd(conn_fd), m_connection(std::make_unique<HttpConnection>(loop, conn_fd)), 
@@ -28,7 +57,7 @@ namespace webserver{
 
     void HttpHandler::handle_http_request(){
         /* bpos当前位置，epos下一行位置 */
-        int bpos = 0, epos = 0;
+        int bpos = 0;
         
         /* ROV优化, 不必忧心效率 */
         std::string buffer = m_connection->get_recv_buffer();

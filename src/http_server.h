@@ -1,11 +1,13 @@
 #pragma once
 
+#include <memory>
 #include "noncopyable.h"
 #include "event_loop_thread_pool.h"
 #include "inet_addr.h"
 #include "socket.h"
 namespace webserver{ 
 
+class Channel;
 class HttpServer : public Noncopyable{
 
 public:

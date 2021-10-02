@@ -1,5 +1,6 @@
 #include "event_loop.h"
 #include "channel.h"
+#include "epoll.h"
 #include <sys/eventfd.h>
 #include <spdlog/spdlog.h>
 
@@ -17,7 +18,8 @@ namespace webserver{
         :m_is_looping(false), m_is_quit(false), 
          m_pid(tl_pid), m_poller(std::make_unique<Epoll>()),
          m_wakeup_fd(create_event_fd()), m_wakeup_channel(std::make_shared<Channel>(m_wakeup_fd, this)),
-         m_is_calling_pending_cb(false), m_poll_timeout(timeout){
+         m_is_calling_pending_cb(false), m_poll_timeout(timeout),
+         m_manager(std::make_unique<HttpManager>(this)){
         if(tl_event_loop != nullptr)
             spdlog::error("one thread only owns one event loop");
         tl_event_loop = this;
@@ -46,7 +48,10 @@ namespace webserver{
             active_channels = m_poller->poll(m_poll_timeout);
 
             for(auto& channel : active_channels){
+                // 处理读写事件
                 channel->dispatch_event();
+                // 处理业务逻辑
+                m_manager->handler(channel);
             }
 
             do_pending_functors();
@@ -112,9 +117,19 @@ namespace webserver{
         m_poller->update_channel(channel);
     }
 
-    void EventLoop::remove_channel(const channel_ptr& channel){
+    void EventLoop::remove_channel(channel_ptr& channel){
         assert(is_in_loop_thread());
         assert(channel->get_loop() == this);
         m_poller->remove_channel(channel);
+        m_manager->del_http_connection(channel);
     }
+
+    void EventLoop::add_http_connection(http_handler_ptr handler){
+	    m_manager->add_http_connection(handler);
+    }
+
+    void EventLoop::flush_keep_alive(channel_ptr &channel, HttpManager::timer_node &node){
+        m_manager -> flush_keep_alive(channel, node);
+    }
+
 }

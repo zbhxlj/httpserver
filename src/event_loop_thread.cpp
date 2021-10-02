@@ -1,4 +1,5 @@
 #include "event_loop_thread.h"
+#include "event_loop.h"
 
 namespace webserver{
     EventLoopThread::EventLoopThread(const thread_init_cb& cb)

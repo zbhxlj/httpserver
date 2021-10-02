@@ -9,6 +9,8 @@
 namespace webserver{
 
 class HttpConnection;
+class EventLoop;
+class HttpManager;
 class HttpHandler : public std::enable_shared_from_this<HttpHandler>{
 
 public:

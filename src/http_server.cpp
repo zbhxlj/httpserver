@@ -1,9 +1,13 @@
 #include <fcntl.h>
 #include <cassert>
 #include <unistd.h>
+#include <spdlog/spdlog.h>
 #include "http_server.h"
 #include "socket.h"
 #include "channel.h"
+#include "event_loop.h"
+#include "event_loop_thread_pool.h"
+#include "http_handler.h"
 
 namespace webserver{
 
@@ -50,8 +54,8 @@ namespace webserver{
 
         EventLoop* next_loop = m_thread_pool->get_next_loop();
         
-        std::shared_ptr<HttpHandler> handler(new HttpHandler(loop, connfd));
-        loop->queueInLoop(std::bind(&EventLoop::addHttpConnection, loop, handler));	
+        std::shared_ptr<HttpHandler> handler(new HttpHandler(next_loop, conn_sock));
+        next_loop->queue_in_loop(std::bind(&EventLoop::add_http_connection, next_loop, handler));	
 
         spdlog::info("New {} connected", conn_sock.get_fd());
       }

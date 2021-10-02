@@ -30,6 +30,11 @@ set(event_loop
 
 set(http
     src/timer.cpp
+    src/http_server.cpp
+    src/http_manager.cpp
+    src/http_handler.cpp
+    src/http_connection.cpp
+    src/socket.cpp
     )
 
 add_library(baselib STATIC ${base})
