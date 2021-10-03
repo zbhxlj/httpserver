@@ -1,15 +1,18 @@
 #pragma once
 
+#include <memory>
 #include "inet_addr.h"
+#include "noncopyable.h"
 
 #define MAX_BUF_SIZE 4096
 namespace webserver{
 /* TcpSocket is a wrapper of a socket fd.
    In charge of its open、read、write、close.
 */
-class TcpSocket{
+class TcpSocket : public Noncopyable{
 
 public:
+   using socket_ptr = std::shared_ptr<TcpSocket>;
     TcpSocket() = default;
     /* Construct listen fd. 
        Default set Non_Block and Reuse_addr.
@@ -25,7 +28,7 @@ public:
     void close();
     /* Bool indicates whether a successful accept.
     */
-    std::pair<bool, TcpSocket> accept();
+    std::pair<bool, socket_ptr> accept();
     /* Shutdown gracefully. 
        i.e. half shutdown
     */
@@ -35,7 +38,7 @@ public:
        Need to check the return value(bytes recv).
        -1 indicates unexpected error(not EAGAIN or EWOULDBLOCK or EINTR).
     */
-    std::tuple<int, bool, std::string> recv();
+    std::pair<int, bool> recv(std::string& buf);
     /* Send on socket fd with Non_Block set.
        Need to check the return value(bytes send).
        -1 indicates unexpected error(not EAGAIN or EWOULDBLOCK or EINTR).

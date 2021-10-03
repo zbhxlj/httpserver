@@ -45,10 +45,10 @@ namespace webserver{
         m_headers[key] = value;
     }
 
-    HttpHandler::HttpHandler(EventLoop* loop, TcpSocket conn_fd)
+    HttpHandler::HttpHandler(EventLoop* loop, socket_ptr conn_fd)
     :m_loop(loop), m_conn_fd(conn_fd), m_connection(std::make_unique<HttpConnection>(loop, conn_fd)), 
      m_state(Start), m_is_keep_alive(false){
-         assert(m_conn_fd.get_fd() > 0);
+         assert(m_conn_fd->get_fd() > 0);
     }
 
     HttpHandler::~HttpHandler() = default;
@@ -67,7 +67,9 @@ namespace webserver{
         int bpos = 0;
         
         std::string buffer = m_connection->get_recv_buffer();
+        spdlog::debug("buf = {}", buffer);
         HttpConnection::ConnState connState = m_connection->get_state();
+        spdlog::debug("state = {}", connState);
         if(connState == HttpConnection::Error)
         {
             m_state = Start;	
@@ -83,7 +85,11 @@ namespace webserver{
         }
         
         bpos = parse_request_line(buffer, bpos);
+        m_state = ParseRequestLine;
+        
         bpos = parse_header(buffer, bpos);
+        m_state = ParseHeader;
+
         m_state = ParseDone;
         
     __err:
@@ -205,12 +211,13 @@ namespace webserver{
         
         /* Parse error.
          */
-        if(m_state != ParseDone)
-        {
-            //bad request 400
-            bad_request(400, "bad request");
-            return ;
-        }
+        // if(m_state != ParseDone)
+        // {
+        //     //bad request 400
+        //     spdlog::info("Parse state = {}", m_state);
+        //     bad_request(400, "bad request");
+        //     return ;
+        // }
         
         if(m_url == "/")
         {
@@ -301,6 +308,6 @@ namespace webserver{
         m_url.clear();
         m_state= Start;
         
-        m_connection->set_state(HttpConnection::Connected);
+        m_connection->set_state(HttpConnection::Handle);
     }
 }

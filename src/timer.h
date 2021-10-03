@@ -2,13 +2,14 @@
 
 #include "event_loop.h"
 #include "channel.h"
+#include "noncopyable.h"
 
 namespace webserver{
 
 /*  A timer wraps the timerfd provided by kernel.
     Used in epoll.
 */
-class Timer{
+class Timer : public Noncopyable{
 
 public:
     using cb = std::function<void()>;

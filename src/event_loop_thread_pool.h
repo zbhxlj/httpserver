@@ -2,6 +2,7 @@
 
 #include <vector>
 #include <functional>
+#include "noncopyable.h"
 namespace webserver{
 
 class EventLoop;

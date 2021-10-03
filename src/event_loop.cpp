@@ -3,6 +3,7 @@
 #include "epoll.h"
 #include <sys/eventfd.h>
 #include <spdlog/spdlog.h>
+#include <memory>
 
 namespace webserver{ 
     thread_local EventLoop* tl_event_loop = nullptr;
@@ -18,7 +19,7 @@ namespace webserver{
     EventLoop::EventLoop(int timeout)
         :m_is_looping(false), m_is_quit(false), 
          m_pid(tl_pid), m_poller(std::make_unique<Epoll>()),
-         m_wakeup_fd(create_event_fd()), m_wakeup_channel(std::make_shared<Channel>(TcpSocket(m_wakeup_fd, InetAddr()), this)),
+         m_wakeup_fd(create_event_fd()), m_wakeup_channel(std::make_shared<Channel>(std::make_shared<TcpSocket>(m_wakeup_fd, InetAddr()), this)),
          m_is_calling_pending_cb(false), m_poll_timeout(timeout),
          m_manager(std::make_unique<HttpManager>(this)){
         if(tl_event_loop != nullptr){
@@ -51,10 +52,12 @@ namespace webserver{
             active_channels = m_poller->poll(m_poll_timeout);
 
             for(auto& channel : active_channels){
+                spdlog::debug("handle channel socket_fd = {}, triggered events = {}", channel->get_fd(), channel->get_triggered_events());
                 // process IO event
                 channel->dispatch_event();
                 // support http
-                m_manager->handler(channel);
+                if(channel->get_triggered_events() & EPOLLIN)
+                    m_manager->handler(channel);
             }
 
             do_pending_functors();

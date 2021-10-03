@@ -8,7 +8,7 @@ namespace webserver{
     Timer::Timer(EventLoop* loop)
     :m_loop(loop), 
      m_timer_fd(::timerfd_create(CLOCK_MONOTONIC, TFD_NONBLOCK | TFD_CLOEXEC)),
-     m_timer_channel(std::make_shared<Channel>(TcpSocket(m_timer_fd, InetAddr()), loop)),
+     m_timer_channel(std::make_shared<Channel>(std::make_shared<TcpSocket>(m_timer_fd, InetAddr()), loop)),
      m_timeout(0), m_expire_cb(nullptr){
          assert(m_loop != nullptr);
          assert(m_timer_fd > 0);

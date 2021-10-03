@@ -34,21 +34,21 @@ namespace webserver{
     TcpSocket::~TcpSocket(){
         close();
     }
-    std::pair<bool, TcpSocket> TcpSocket::accept(){
+    std::pair<bool, TcpSocket::socket_ptr> TcpSocket::accept(){
         sockaddr_in client_addr;
         socklen_t addr_len = sizeof(client_addr);
         
         int conn_fd = ::accept4(m_socket_fd, (sockaddr*)&client_addr,&addr_len, SOCK_NONBLOCK);
-        auto conn_sock = TcpSocket(conn_fd, InetAddr(std::move(client_addr)));
+        auto conn_sock = std::make_shared<TcpSocket>(conn_fd, InetAddr(std::move(client_addr)));
         
         if(conn_fd == -1) return {false, conn_sock};
         else return {true, conn_sock};
     }
 
     void TcpSocket::close(){
-        int ret = ::close(m_socket_fd);
-        if(ret < 0)
-            spdlog::warn("Unclean close! socket fd = {}", m_socket_fd);
+        // int ret = ::close(m_socket_fd);
+        // if(ret < 0)
+            // spdlog::warn("Unclean close! socket fd = {} errno = {}", m_socket_fd, ::strerror(errno));
     }
 
     void TcpSocket::shutdown(int type){
@@ -61,54 +61,53 @@ namespace webserver{
         ::signal(SIGPIPE, SIG_IGN);
     }
 
-    std::tuple<int, bool, std::string> TcpSocket::recv(){
+    std::pair<int, bool> TcpSocket::recv(std::string& buf){
         char buffer[MAX_BUF_SIZE];
         int read_bytes = 0;
-        int recv_bytes = 0;
-        std::string read_buf;
+        int total_recv_bytes = 0;
         
         while(true) {
             if((read_bytes = ::recv(m_socket_fd, buffer, MAX_BUF_SIZE, 0)) <= 0){
                 if(errno == EINTR) continue;
-                if(errno == EAGAIN || errno == EWOULDBLOCK) return { recv_bytes, false, read_buf };
+                if(errno == EAGAIN || errno == EWOULDBLOCK) return { total_recv_bytes, false };
                 if(read_bytes == 0){
-                    return { recv_bytes, true, read_buf };
+                    return { total_recv_bytes, true };
                 }
                 spdlog::warn("Recv error occured : {} ", ::strerror(errno));
-                return { -1, false, read_buf };
+                return { -1, false };
             }
-            recv_bytes += read_bytes;
-            read_buf += std::string(buffer, read_bytes);
+            total_recv_bytes += read_bytes;
+            buf += std::string(buffer, read_bytes);
         }
         spdlog::error("Never reach here!");
         abort();
-        return {-1, false, std::string()};
+        return { -1, false };
     }
 
     int TcpSocket::send(std::string& buf){
-        int write_bytes;
         int send_bytes;
-        int buffer_bytes = buf.size();
+        int already_send_bytes = 0;
+        int to_send_bytes = buf.size();
         const char* ptr = buf.data();
 
-        while(send_bytes < buffer_bytes){
-            write_bytes = ::send(m_socket_fd, ptr + send_bytes, buffer_bytes - send_bytes, 0);
-            if(write_bytes < 0){
+        while(already_send_bytes < to_send_bytes){
+            send_bytes = ::send(m_socket_fd, ptr + already_send_bytes, to_send_bytes - already_send_bytes, 0);
+            if(send_bytes <= 0){
                 if(errno == EAGAIN || errno == EWOULDBLOCK) break;
-                else if(errno == EINTR) continue;
+                if(errno == EINTR) continue;
  
                 buf.clear();
                 spdlog::warn("Write error occured: {} ", ::strerror(errno));
                 return -1;
             }
-            send_bytes += write_bytes;
+            already_send_bytes += send_bytes;
         }
 
-        if(write_bytes == send_bytes){
+        if(already_send_bytes == to_send_bytes){
             buf.clear();
         }else {
-            buf = buf.substr(send_bytes);
+            buf = buf.substr(already_send_bytes);
         }
-        return send_bytes;
+        return already_send_bytes;
     }
 }

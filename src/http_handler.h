@@ -5,6 +5,7 @@
 #include "http_manager.h"
 #include "socket.h"
 #include <memory>
+#include "noncopyable.h"
 
 namespace webserver{
 
@@ -14,19 +15,21 @@ class HttpManager;
 /* Process Http requests and send response.
    Per HttpHandler owns a HttpConnection.
  */
-class HttpHandler : public std::enable_shared_from_this<HttpHandler>{
+class HttpHandler : public std::enable_shared_from_this<HttpHandler>,
+                    public Noncopyable{
 
 public:
+    using socket_ptr = std::shared_ptr<TcpSocket>;
     friend class HttpManager;
     enum HttpVersion {HttpV10, HttpV11};
     enum HttpMethod {GET};
-    enum HttpState {Start, ParseRequestLine, ParseHeader, ParseBody, ParseDone, Response};
+    enum HttpState {Start, ParseRequestLine, ParseHeader, ParseDone, Response};
     /* Convert string into enum vaues.
      */
     static const char* Method[];
     static const char* Version[];
 
-    HttpHandler(EventLoop* loop, TcpSocket conn_fd);
+    HttpHandler(EventLoop* loop, socket_ptr conn_fd);
     ~HttpHandler();
 
     /* Add new http connection.
@@ -60,7 +63,7 @@ private:
     void set_header(const std::string& key, const std::string& value);
     void reset();
     EventLoop* m_loop;
-    TcpSocket m_conn_fd;
+    socket_ptr m_conn_fd;
     std::unique_ptr<HttpConnection> m_connection;
     HttpMethod m_method;
     HttpVersion m_version;
@@ -68,6 +71,8 @@ private:
     std::map<std::string, std::string> m_headers;
     std::string m_url;
     bool m_is_keep_alive;
+    /* Node in keep-alive list.
+     */
     HttpManager::timer_node m_timer_node;
 };
 

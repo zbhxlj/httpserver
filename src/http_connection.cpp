@@ -6,10 +6,10 @@
 #include "socket.h"
 
 namespace webserver{
-    HttpConnection::HttpConnection(EventLoop* loop, TcpSocket conn_fd)
+    HttpConnection::HttpConnection(EventLoop* loop, socket_ptr conn_fd)
     : m_loop(loop), m_conn_fd(conn_fd), m_channel(std::make_shared<Channel>(conn_fd, loop)),
       m_handler(), m_state(Connected){
-         assert(m_conn_fd.get_fd() > 0);
+         assert(m_conn_fd->get_fd() > 0);
     }
 
     HttpConnection::~HttpConnection(){}
@@ -23,7 +23,8 @@ namespace webserver{
     void HttpConnection::handle_read(){
         assert(m_loop->is_in_loop_thread());
 
-        auto [nbytes, is_finished, buf] = m_conn_fd.recv();
+        auto [nbytes, is_finished] = m_conn_fd->recv(m_in_buffer);
+        // spdlog::debug("nbytes = {}, is_finished = {}, buf = {}", nbytes, is_finished, m_in_buffer);
         // error management
         if(nbytes < 0){
             m_state = DisConnected;
@@ -36,7 +37,7 @@ namespace webserver{
         }else if(is_finished){
             m_state = DisConnecting;
             m_channel->unregister_read();
-            m_conn_fd.shutdown(SHUT_RD);
+            m_conn_fd->shutdown(SHUT_RD);
             return;
         }
         m_state = Handle;
@@ -45,7 +46,7 @@ namespace webserver{
     void HttpConnection::handle_write(){
         assert(m_loop->is_in_loop_thread());
 
-        int nbytes = m_conn_fd.send(m_out_buffer);
+        int nbytes = m_conn_fd->send(m_out_buffer);
         if(m_out_buffer.size() == 0){
             m_channel->unregister_write();
             if(m_state == DisConnecting){
@@ -90,6 +91,6 @@ namespace webserver{
     }
 
     void HttpConnection::shut_down(int how){
-        m_conn_fd.shutdown(how);
+        m_conn_fd->shutdown(how);
     }
 }

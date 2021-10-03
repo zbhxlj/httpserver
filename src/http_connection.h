@@ -3,6 +3,7 @@
 #include <memory>
 #include <string>
 #include "socket.h"
+#include "noncopyable.h"
 namespace webserver{
 
 class EventLoop;
@@ -12,13 +13,14 @@ class HttpHandler;
    One HttpHandler hold a HttpConnection.
    In charge of connection's open、read、write、close， and corresponding state.
  */
-class HttpConnection{
+class HttpConnection : public Noncopyable{
 
 public: 
+    using socket_ptr = std::shared_ptr<TcpSocket>;
     using channel_ptr = std::shared_ptr<Channel>;
     enum ConnState{ Connected, Handle, Error, DisConnecting, DisConnected};
 
-    HttpConnection(EventLoop* loop, TcpSocket conn_fd);
+    HttpConnection(EventLoop* loop, socket_ptr conn_fd);
     ~HttpConnection();
 
     void handle_read();
@@ -44,7 +46,7 @@ public:
 
 private:
     EventLoop* m_loop;
-    TcpSocket m_conn_fd;
+    socket_ptr m_conn_fd;
     channel_ptr m_channel;
     std::string m_in_buffer;
     std::string m_out_buffer;

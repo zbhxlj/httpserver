@@ -59,3 +59,6 @@ target_link_libraries(epoll_test ${commonlib})
 
 add_executable(http_test test/http_test.cpp)
 target_link_libraries(http_test ${commonlib})
+
+add_executable(web_server web_server.cpp)
+target_link_libraries(web_server ${commonlib})
