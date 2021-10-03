@@ -6,6 +6,8 @@
 #include "noncopyable.h"
 namespace webserver{
 
+/* Thread pool implemented using lock-free multi-producer、multi-consumer queue.
+*/
 class ThreadPool : public Noncopyable{
 public:
     using Task = std::function<void()>;
@@ -19,7 +21,7 @@ private:
     void consume_task();
     std::vector<std::unique_ptr<Thread>> m_threads;
     moodycamel::ConcurrentQueue<Task> m_task_queue;
-    std::atomic<bool> m_is_running;
+    bool m_is_running;
     size_t m_thread_nums;
     size_t m_reserved_task_capacity;
     

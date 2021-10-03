@@ -13,6 +13,8 @@ class Epoll;
 class Channel;
 class HttpHandler;
 extern thread_local pid_t tl_pid;
+/*  Abstract of loop in worker thread.
+*/
 class EventLoop : public Noncopyable{
 public:
     using functor = std::function<void()>;
@@ -23,10 +25,18 @@ public:
     ~EventLoop();
     void loop();
     void stop();
+    /* Schedule callback to run in curent loop. 
+       Called in the same thread.
+    */
     void run_in_loop(functor && cb);
+    /* Schedule callback to run in current loop.
+       Called in othre thread.
+    */
     void queue_in_loop(functor && cb);
     bool is_in_loop_thread() const { return m_pid == tl_pid; }
     static EventLoop* get_eventloop_of_cur_thread();
+    /* Delegate Epoll to update.
+    */
     void update_channel(const channel_ptr& channel);
     void remove_channel(channel_ptr& channel);
 
@@ -38,9 +48,11 @@ private:
     void clean_wakeup();
     void wakeup_from_poll();
     bool m_is_looping;
-    std::atomic<bool> m_is_quit;
+    bool m_is_quit;
     pid_t m_pid;
     std::unique_ptr<Epoll> m_poller;
+    /* Eventfd provided by kernel used in epoll.
+    */
     int m_wakeup_fd;
     std::shared_ptr<Channel> m_wakeup_channel;
     channel_vector m_active_channels;
@@ -48,6 +60,7 @@ private:
     std::vector<functor> m_pending_cbs;
     std::mutex m_mutex;
     int m_poll_timeout;
+    // support http
     std::unique_ptr<HttpManager> m_manager;
 };
 

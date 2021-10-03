@@ -6,6 +6,9 @@ namespace webserver{
 
 class EventLoop;
 class EventLoopThread;
+/* ThreadPool consists of eventloop thread.
+   i.e. worker threadpool.
+*/
 class EventLoopThreadPool{
 
 public :
@@ -13,6 +16,9 @@ public :
     EventLoopThreadPool(EventLoop* base_loop, int thread_nums = 0);
     ~EventLoopThreadPool();
     void start(const thread_init_cb& cb = thread_init_cb());
+    /* To dispatch tasks, we get different thread's loop 
+       using round-robin algorithm, for load balance.
+     */
     EventLoop* get_next_loop();
 private:
     EventLoop* m_base_loop;

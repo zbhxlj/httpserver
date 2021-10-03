@@ -46,9 +46,10 @@ namespace webserver{
 
     void Epoll::remove_channel(const channel_ptr& channel){
         int fd = channel->get_fd();
-        if(m_channel_map.find(fd) == m_channel_map.end())
+        if(m_channel_map.find(fd) == m_channel_map.end()){
             spdlog::error("remove channel failed! channel not exist!");
-        
+            abort();
+        }
         update_event(channel, EPOLL_CTL_DEL);
         m_channel_map.erase(fd);
     }

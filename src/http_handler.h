@@ -11,6 +11,9 @@ namespace webserver{
 class HttpConnection;
 class EventLoop;
 class HttpManager;
+/* Process Http requests and send response.
+   Per HttpHandler owns a HttpConnection.
+ */
 class HttpHandler : public std::enable_shared_from_this<HttpHandler>{
 
 public:
@@ -18,21 +21,37 @@ public:
     enum HttpVersion {HttpV10, HttpV11};
     enum HttpMethod {GET};
     enum HttpState {Start, ParseRequestLine, ParseHeader, ParseBody, ParseDone, Response};
-
+    /* Convert string into enum vaues.
+     */
     static const char* Method[];
     static const char* Version[];
 
     HttpHandler(EventLoop* loop, TcpSocket conn_fd);
     ~HttpHandler();
 
+    /* Add new http connection.
+     */
     void new_connection();
+    /* Parse http request.
+     */
     void handle_http_request();
 private:
     int parse_request_line(std::string& buf, int bpos);
     int parse_header(std::string& buf, int bpos);
+    /* Send http response.
+     */
     void respond_request();
+    /* Clean up after parsing a http request.
+       If it is not keep-alive, close it.
+       Else reset state, ready for next http request.
+     */
     void handle_keep_alive();
+    /* Error occured.
+       Send bad response.
+     */
     void bad_request(int num, const std::string& note);
+    /* EveryThing fine.
+     */
     void on_request(const std::string& body);
 
     void set_method(const std::string& method);

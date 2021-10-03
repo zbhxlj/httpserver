@@ -8,9 +8,13 @@
 namespace webserver{ 
 
 class Channel;
+/*  Wrapper of a http server.
+ */
 class HttpServer : public Noncopyable{
 
 public:
+    /* @param listen ip and port
+     */
     HttpServer(EventLoop *loop, std::string ip, short port, int thread_nums);
     ~HttpServer();
 

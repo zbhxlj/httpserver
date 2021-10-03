@@ -8,8 +8,11 @@ namespace webserver{
     : m_base_loop(base_loop), m_is_started(false),
       m_thread_nums(thread_nums), m_turn(0){}
 
-    // TODO delete thread
-    EventLoopThreadPool::~EventLoopThreadPool(){}
+    EventLoopThreadPool::~EventLoopThreadPool(){
+        for(int i = 0; i < m_thread_nums; i++){
+            delete m_threads[i];
+        }
+    }
 
     void EventLoopThreadPool::start(const thread_init_cb& cb){
         assert(!m_is_started);

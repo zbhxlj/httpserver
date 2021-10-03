@@ -7,7 +7,7 @@
 
 namespace webserver{
     HttpConnection::HttpConnection(EventLoop* loop, TcpSocket conn_fd)
-    : m_loop(loop), m_conn_fd(conn_fd), m_channel(std::make_shared<Channel>(conn_fd.get_fd(), loop)),
+    : m_loop(loop), m_conn_fd(conn_fd), m_channel(std::make_shared<Channel>(conn_fd, loop)),
       m_handler(), m_state(Connected){
          assert(m_conn_fd.get_fd() > 0);
     }
@@ -66,10 +66,12 @@ namespace webserver{
         auto guard = m_handler.lock();
         if(guard == nullptr){
             spdlog::error("Handler destroyed before connection!");
+            abort();
         }
 
         m_channel -> unregister_all();
         m_loop -> remove_channel(m_channel);
+        spdlog::debug("Http connection closed");
     }
 
     void HttpConnection::send(const void* data, int len){

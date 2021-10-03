@@ -11,7 +11,7 @@ set(CMAKE_CXX_FLAGS "-g -Wall -Werror")
 # add_executable(web_server)
 
 set(base
-    src/config_parser.cpp
+    src/config.cpp
     src/count_down_latch.cpp
     src/thread_pool.cpp
     src/thread.cpp

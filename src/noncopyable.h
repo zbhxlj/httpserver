@@ -2,6 +2,8 @@
 
 namespace webserver{
 
+/*  Delete copy.
+*/
 class Noncopyable{
 
 public:

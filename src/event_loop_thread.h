@@ -6,9 +6,14 @@
 namespace webserver{
 
 class EventLoop;
+/* Thread containing a eventloop.
+   Used by eventloop_thread_pool.
+*/
 class EventLoopThread : public Noncopyable{
 
 public:
+    /* A section of code, when we want to do some other things.
+    */
     using thread_init_cb = std::function<void(EventLoop*)>;
     EventLoopThread(const thread_init_cb& cb = thread_init_cb());
     ~EventLoopThread();

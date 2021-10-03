@@ -1,4 +1,5 @@
 #include <strings.h>
+#include <spdlog/spdlog.h>
 #include <sys/time.h>
 #include <cassert>
 #include "http_manager.h"
@@ -18,6 +19,7 @@ namespace webserver {
 
     void HttpManager::handler(channel_ptr& channel){
         if(channel->read_registered() && m_http_map.find(channel) != m_http_map.end()){
+            spdlog::info("Handle http request");
             m_http_map[channel]->handle_http_request();
         }
     }
@@ -26,6 +28,7 @@ namespace webserver {
         auto& channel = handler -> m_connection -> get_channel();
         m_http_map.insert({channel, handler});
         handler -> new_connection();
+        spdlog::info("Establish http connection");
     }
 
     void HttpManager::del_http_connection(channel_ptr& channel){
@@ -33,6 +36,7 @@ namespace webserver {
         if(m_keep_alive_set.find(channel) != m_keep_alive_set.end()){
             m_keep_alive_set.erase(channel);
         }
+        spdlog::info("Delete http connection");
     }
 
     void HttpManager::flush_keep_alive(const channel_ptr& channel, timer_node& node){
@@ -41,7 +45,6 @@ namespace webserver {
 
         int ret = gettimeofday(&time, NULL);
         assert(ret >= 0);
-        // TODO:
         time.tv_sec += 120;
 
         if(m_keep_alive_set.find(channel) != m_keep_alive_set.end()){

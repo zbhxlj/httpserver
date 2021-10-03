@@ -4,11 +4,13 @@
 #include <memory>
 
 namespace webserver{
+    /*  Current thread's pid and thread instance. 
+    */
     thread_local pid_t tl_pid;
     thread_local Thread* tl_thread;
-    Thread::Thread(thread_func func, std::string name)
+    Thread::Thread(thread_func func)
         : m_pthread_id(0), m_pid(0),
-          m_thread_func(std::move(func)),m_thread_name(std::move(name)),
+          m_thread_func(std::move(func)),
           m_is_started(false), m_is_joined(false), m_latch(1){
         int ret = pthread_create(&m_pthread_id, nullptr, &start, this);
         if(ret != 0){
@@ -39,9 +41,5 @@ namespace webserver{
             m_is_joined = true;
             pthread_join(m_pthread_id, nullptr);
         }
-    }
-
-    void Thread::set_thread_name(std::string name){
-        m_thread_name = std::move(name);
     }
 }

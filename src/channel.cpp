@@ -2,6 +2,9 @@
 #include "event_loop.h"
 
 namespace webserver{ 
+    /* Take error as readable and writable events.
+       Inspired by redis and libevent.
+    */
     void Channel::dispatch_event(){
         if(m_triggered_events & EPOLLERR){
             m_triggered_events |= ((READ | WRITE) & m_registered_events);

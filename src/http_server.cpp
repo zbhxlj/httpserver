@@ -14,7 +14,7 @@ namespace webserver{
     HttpServer::HttpServer(EventLoop *loop, std::string ip, short port, int thread_nums)
     : m_base_loop(loop), m_thread_nums(thread_nums), 
       m_thread_pool(std::make_unique<EventLoopThreadPool>(m_base_loop, m_thread_nums)),
-      m_listen_fd(TcpSocket(ip, port)), m_accept_channel(std::make_shared<Channel>(m_listen_fd.get_fd(), m_base_loop)),
+      m_listen_fd(TcpSocket(ip, port)), m_accept_channel(std::make_shared<Channel>(m_listen_fd, m_base_loop)),
       m_is_started(false), m_idle_fd(::open("/dev/null", O_RDONLY | O_CLOEXEC)){
         assert(m_listen_fd.get_fd() > 0);
         assert(m_idle_fd > 0);
@@ -41,6 +41,10 @@ namespace webserver{
       while(true){
         auto [ok, conn_sock] = m_listen_fd.accept();
         if(!ok) {
+          /* Error: two many open file descriptors.
+             Denial of service.
+             Use idle fd to accept and then close it.
+           */
           if(errno == EMFILE) {
             ::close(m_idle_fd);
             
@@ -54,6 +58,7 @@ namespace webserver{
 
         EventLoop* next_loop = m_thread_pool->get_next_loop();
         
+        // suported http
         std::shared_ptr<HttpHandler> handler(new HttpHandler(next_loop, conn_sock));
         next_loop->queue_in_loop(std::bind(&EventLoop::add_http_connection, next_loop, handler));	
 

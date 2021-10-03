@@ -31,19 +31,24 @@ namespace webserver{
     TcpSocket::TcpSocket(int sock_fd, InetAddr addr)
         :m_socket_fd(sock_fd), m_addr(std::move(addr)){}
 
+    TcpSocket::~TcpSocket(){
+        close();
+    }
     std::pair<bool, TcpSocket> TcpSocket::accept(){
         sockaddr_in client_addr;
         socklen_t addr_len = sizeof(client_addr);
+        
         int conn_fd = ::accept4(m_socket_fd, (sockaddr*)&client_addr,&addr_len, SOCK_NONBLOCK);
         auto conn_sock = TcpSocket(conn_fd, InetAddr(std::move(client_addr)));
+        
         if(conn_fd == -1) return {false, conn_sock};
         else return {true, conn_sock};
     }
 
     void TcpSocket::close(){
-        // int ret = ::close(m_socket_fd);
-        // if(ret < 0)
-            // spdlog::warn("Unclean close! socket fd = {}", m_socket_fd);
+        int ret = ::close(m_socket_fd);
+        if(ret < 0)
+            spdlog::warn("Unclean close! socket fd = {}", m_socket_fd);
     }
 
     void TcpSocket::shutdown(int type){
@@ -64,18 +69,19 @@ namespace webserver{
         
         while(true) {
             if((read_bytes = ::recv(m_socket_fd, buffer, MAX_BUF_SIZE, 0)) <= 0){
-                spdlog::info("read_bytes = {}, errno = {}", read_bytes, strerror(errno));
                 if(errno == EINTR) continue;
                 if(errno == EAGAIN || errno == EWOULDBLOCK) return { recv_bytes, false, read_buf };
                 if(read_bytes == 0){
                     return { recv_bytes, true, read_buf };
                 }
+                spdlog::warn("Recv error occured : {} ", ::strerror(errno));
                 return { -1, false, read_buf };
             }
             recv_bytes += read_bytes;
             read_buf += std::string(buffer, read_bytes);
         }
         spdlog::error("Never reach here!");
+        abort();
         return {-1, false, std::string()};
     }
 
@@ -92,7 +98,7 @@ namespace webserver{
                 else if(errno == EINTR) continue;
  
                 buf.clear();
-                spdlog::warn("Write occured error {}", ::strerror(errno));
+                spdlog::warn("Write error occured: {} ", ::strerror(errno));
                 return -1;
             }
             send_bytes += write_bytes;

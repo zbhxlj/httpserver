@@ -10,6 +10,7 @@ namespace webserver{
         int event_fd = ::eventfd(0, EFD_NONBLOCK | EFD_CLOEXEC);
         if(event_fd < 0){
             spdlog::error("create_event_fd failed: {}", event_fd);
+            abort();
         }
         return event_fd;
     }
@@ -17,11 +18,13 @@ namespace webserver{
     EventLoop::EventLoop(int timeout)
         :m_is_looping(false), m_is_quit(false), 
          m_pid(tl_pid), m_poller(std::make_unique<Epoll>()),
-         m_wakeup_fd(create_event_fd()), m_wakeup_channel(std::make_shared<Channel>(m_wakeup_fd, this)),
+         m_wakeup_fd(create_event_fd()), m_wakeup_channel(std::make_shared<Channel>(TcpSocket(m_wakeup_fd, InetAddr()), this)),
          m_is_calling_pending_cb(false), m_poll_timeout(timeout),
          m_manager(std::make_unique<HttpManager>(this)){
-        if(tl_event_loop != nullptr)
+        if(tl_event_loop != nullptr){
             spdlog::error("one thread only owns one event loop");
+            abort();
+        }
         tl_event_loop = this;
         m_wakeup_channel->set_read_cb(
             std::bind(&EventLoop::clean_wakeup, this));
@@ -48,9 +51,9 @@ namespace webserver{
             active_channels = m_poller->poll(m_poll_timeout);
 
             for(auto& channel : active_channels){
-                // 处理读写事件
+                // process IO event
                 channel->dispatch_event();
-                // 处理业务逻辑
+                // support http
                 m_manager->handler(channel);
             }
 
@@ -69,16 +72,18 @@ namespace webserver{
         uint64_t tickle = 1;
         ssize_t write_bytes = ::write(m_wakeup_fd, &tickle, sizeof(tickle));
         if(write_bytes != sizeof(tickle)){
-            spdlog::info("write_bytes = {}", write_bytes);
-            spdlog::warn("Not successfully write to wakeup_from_poll!");
+            spdlog::error("Not successfully write to wakeup_from_poll!");
+            abort();
         }
     }
 
     void EventLoop::clean_wakeup(){
         uint64_t tickle;
         ssize_t received_bytes = read(m_wakeup_fd, &tickle, sizeof(tickle));
-        if(received_bytes != sizeof(tickle))   
-            spdlog::warn("Not successfully read to clean wakeup!");
+        if(received_bytes != sizeof(tickle)){
+            spdlog::error("Not successfully read to clean wakeup!");
+            abort();
+        }
     }
 
     void EventLoop::run_in_loop(functor&& cb){

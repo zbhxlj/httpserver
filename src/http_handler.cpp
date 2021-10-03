@@ -18,6 +18,7 @@ namespace webserver{
         }
         else {
             spdlog::error("Method {} not suported", method);
+            abort();
         }
     }
 
@@ -27,12 +28,17 @@ namespace webserver{
 
     void HttpHandler::set_version(const std::string& version){
         // only support HTTP/1.0 HTTP/1.1 
+        bool matched = false;
         for(int i = 0; i < 2; i++){
             if(version == Version[i]){
                 m_version = static_cast<HttpVersion>(i);
+                matched = true;
             }
         }
-        spdlog::error("Not supported version {}", version);
+        if(!matched){
+            spdlog::error("Not supported version {}", version);
+            abort();
+        }
     }
 
     void HttpHandler::set_header(const std::string& key, const std::string& value){ 
@@ -56,19 +62,20 @@ namespace webserver{
     }
 
     void HttpHandler::handle_http_request(){
-        /* bpos当前位置，epos下一行位置 */
+        /*  Current position.
+         */
         int bpos = 0;
         
-        /* ROV优化, 不必忧心效率 */
         std::string buffer = m_connection->get_recv_buffer();
         HttpConnection::ConnState connState = m_connection->get_state();
         if(connState == HttpConnection::Error)
         {
-            m_state = Start;	/* 跳过解析环节，回复404 bad request */
+            m_state = Start;	
             goto __err;
         }
         
-        /* 请求到来，但无数据 */
+        /* No data available. 
+         */
         if(buffer.empty()) 
         {
             m_state = Start;
@@ -80,28 +87,35 @@ namespace webserver{
         m_state = ParseDone;
         
     __err:
-        /* 根据解析状态，返回结果 */
+        /*  Send http response.
+         */
         respond_request();
-        
-        /* 连接处理：断开 or 保持 */
+        /* Clean up connection depends on keep-alive flag.
+         */
         handle_keep_alive();
     }
 
     int HttpHandler::parse_request_line(std::string& buf, int bpos){
         std::string::size_type epos = buf.find("\r\n", bpos);
         
-        /* 解析请求方法 */
+        /* Parse method
+         */
         std::string::size_type space = buf.find(" ", bpos);
         set_method(buf.substr(bpos, space-bpos));
+        spdlog::debug("Http method : {}", m_method);
         
-        /* 解析请求资源路径 */
+        /* Parse url
+         */
         bpos = space+1;
         space = buf.find(" ", bpos);
         set_url(buf.substr(bpos, space-bpos));
+        spdlog::debug("Http url : {}", m_url);
         
-        /* 解析Http版本号 */
+        /* Parse version
+         */
         bpos = space+1;
         set_version(buf.substr(bpos, epos-bpos));
+        spdlog::debug("Http version : {}", m_version);
         if(m_version == HttpV11) m_is_keep_alive = true;        
         return epos+2;
     }
@@ -121,11 +135,10 @@ namespace webserver{
             std::string value(buf.substr(sep, epos-sep));
             
             set_header(key, value);
-            
+            spdlog::debug("{}: {}", key, value);
             bpos = epos+2;
         }
         
-        /* Keepalive判断 */
         if(m_headers.find("Connection") != m_headers.end())
         {
             if(m_headers["Connection"] == "keep-alive" || 
@@ -161,6 +174,8 @@ namespace webserver{
 	header += "Content-Length: " + std::to_string(body.size()) + "\r\n";
 	header += "Server: ZBH's HttpServer\r\n\r\n";
 	
+    spdlog::debug("http response header : {}", header);
+    spdlog::debug("http response body : {}", body);
 	m_connection->send(header);
 	m_connection->send(body);
 }
@@ -180,13 +195,16 @@ namespace webserver{
         
         m_connection->send(header);
         m_connection->send(body);
+        spdlog::debug("http response header : {}", header);
+        spdlog::debug("http response body : {}", body);
     }
     
     void HttpHandler::respond_request(){
         std::string filename("source/");
         std::string context;
         
-        /* 根据解析状态，响应Http请求 */
+        /* Parse error.
+         */
         if(m_state != ParseDone)
         {
             //bad request 400
@@ -194,15 +212,14 @@ namespace webserver{
             return ;
         }
         
-        /* 解析请求资源 */
         if(m_url == "/")
         {
-            //默认返回index.html页面
             filename += "index.html";
         }
         else 
         {
-            /* 不能原地赋值!! */
+            /* Delete leading "/".
+             */
             std::string path = m_url.substr(1);
             
             //for webbench test!
@@ -222,7 +239,8 @@ namespace webserver{
             filename += path;
         }
         
-        /* 返回页面 */
+        /* Fetch resources.
+         */
         struct stat st;
         if(::stat(filename.c_str(), &st) < 0)
         {
@@ -258,32 +276,31 @@ namespace webserver{
 
     void HttpHandler::handle_keep_alive (){
         if(! m_is_keep_alive){
-            /* 关闭非keepalive连接，并返回 */
+            /* Close non keep-alive connection.
+             */
             m_connection->set_state(HttpConnection::DisConnecting);
             m_connection->get_channel()->unregister_read();
-            m_connection->shut_down(SHUT_RD);	/* 关闭读半部 */
+            m_connection->shut_down(SHUT_RD);	
             
             return ;
         }
         
-        /* 对方关闭了， 我们也关闭返回 */
+        /* If peer closed the write end, then we close.
+         */
         HttpConnection::ConnState connState = m_connection->get_state();
         if(connState == HttpConnection::DisConnecting) return ;
         
-        // 重置状态
+        // Reset state.
         reset();
     }
 
     void HttpHandler::reset(){
-        /* 刷新keepalive时间 */
         m_loop->flush_keep_alive(m_connection->get_channel(), m_timer_node);
         
-        /* 清理工作，为下次接受请求做准备 */
         m_headers.clear();
         m_url.clear();
         m_state= Start;
         
-        /* 重置Httpconnection状态 */
-        m_connection->set_state(HttpConnection::Handle);
+        m_connection->set_state(HttpConnection::Connected);
     }
 }

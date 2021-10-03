@@ -6,6 +6,8 @@
 #include <arpa/inet.h>
 namespace webserver{
 
+/* Wrapper of a sockaddr_in.
+*/
 class InetAddr{
 
 public:

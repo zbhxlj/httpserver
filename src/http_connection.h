@@ -8,6 +8,10 @@ namespace webserver{
 class EventLoop;
 class Channel;
 class HttpHandler;
+/* Abstract of a http connection.
+   One HttpHandler hold a HttpConnection.
+   In charge of connection's open、read、write、close， and corresponding state.
+ */
 class HttpConnection{
 
 public: 
