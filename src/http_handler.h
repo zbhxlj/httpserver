@@ -1,13 +1,13 @@
 #pragma once
 
-#include <string>
-#include <map>
 #include "http_manager.h"
-#include "socket.h"
-#include <memory>
 #include "noncopyable.h"
+#include "socket.h"
+#include <map>
+#include <memory>
+#include <string>
 
-namespace webserver{
+namespace webserver {
 
 class HttpConnection;
 class EventLoop;
@@ -16,20 +16,26 @@ class HttpManager;
    Per HttpHandler owns a HttpConnection.
  */
 class HttpHandler : public std::enable_shared_from_this<HttpHandler>,
-                    public Noncopyable{
+                    public Noncopyable {
 
-public:
+  public:
     using socket_ptr = std::shared_ptr<TcpSocket>;
     friend class HttpManager;
-    enum HttpVersion {HttpV10, HttpV11};
-    enum HttpMethod {GET};
-    enum HttpState {Start, ParseRequestLine, ParseHeader, ParseDone, Response};
+    enum HttpVersion { HttpV10, HttpV11 };
+    enum HttpMethod { GET };
+    enum HttpState {
+        Start,
+        ParseRequestLine,
+        ParseHeader,
+        ParseDone,
+        Response
+    };
     /* Convert string into enum vaues.
      */
-    static const char* Method[];
-    static const char* Version[];
+    static const char *Method[];
+    static const char *Version[];
 
-    HttpHandler(EventLoop* loop, socket_ptr conn_fd);
+    HttpHandler(EventLoop *loop, socket_ptr conn_fd);
     ~HttpHandler();
 
     /* Add new http connection.
@@ -38,9 +44,10 @@ public:
     /* Parse http request.
      */
     void handle_http_request();
-private:
-    int parse_request_line(std::string& buf, int bpos);
-    int parse_header(std::string& buf, int bpos);
+
+  private:
+    int parse_request_line(std::string &buf, int bpos);
+    int parse_header(std::string &buf, int bpos);
     /* Send http response.
      */
     void respond_request();
@@ -52,17 +59,17 @@ private:
     /* Error occured.
        Send bad response.
      */
-    void bad_request(int num, const std::string& note);
+    void bad_request(int num, const std::string &note);
     /* EveryThing fine.
      */
-    void on_request(const std::string& body);
+    void on_request(const std::string &body);
 
-    void set_method(const std::string& method);
-    void set_url(const std::string& url);
-    void set_version(const std::string& version);
-    void set_header(const std::string& key, const std::string& value);
+    void set_method(const std::string &method);
+    void set_url(const std::string &url);
+    void set_version(const std::string &version);
+    void set_header(const std::string &key, const std::string &value);
     void reset();
-    EventLoop* m_loop;
+    EventLoop *m_loop;
     socket_ptr m_conn_fd;
     std::unique_ptr<HttpConnection> m_connection;
     HttpMethod m_method;
@@ -76,4 +83,4 @@ private:
     HttpManager::timer_node m_timer_node;
 };
 
-}
+} // namespace webserver

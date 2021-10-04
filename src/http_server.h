@@ -1,18 +1,18 @@
 #pragma once
 
-#include <memory>
-#include "noncopyable.h"
 #include "event_loop_thread_pool.h"
 #include "inet_addr.h"
+#include "noncopyable.h"
 #include "socket.h"
-namespace webserver{ 
+#include <memory>
+namespace webserver {
 
 class Channel;
 /*  Wrapper of a http server.
  */
-class HttpServer : public Noncopyable{
+class HttpServer : public Noncopyable {
 
-public:
+  public:
     using socket_ptr = std::shared_ptr<TcpSocket>;
     /* @param listen ip and port
      */
@@ -22,8 +22,8 @@ public:
     void start();
     void acceptor();
 
-private:
-    EventLoop* m_base_loop;
+  private:
+    EventLoop *m_base_loop;
     int m_thread_nums;
     std::unique_ptr<EventLoopThreadPool> m_thread_pool;
     socket_ptr m_listen_fd;
@@ -32,4 +32,4 @@ private:
     int m_idle_fd;
 };
 
-}
+} // namespace webserver

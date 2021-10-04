@@ -1,29 +1,29 @@
-#pragma once 
+#pragma once
 
+#include "noncopyable.h"
+#include "socket.h"
 #include <functional>
+#include <memory>
 #include <sys/epoll.h>
 #include <unistd.h>
-#include <memory>
-#include "socket.h"
-#include "noncopyable.h"
-namespace webserver{
+namespace webserver {
 
 class EventLoop;
-/*  In charge of a socket fd's event which mounted on epollfd. 
-*/
-class Channel : public std::enable_shared_from_this<Channel>, 
-                public Noncopyable{
-public:
+/*  In charge of a socket fd's event which mounted on epollfd.
+ */
+class Channel : public std::enable_shared_from_this<Channel>,
+                public Noncopyable {
+  public:
     using event_cb = std::function<void()>;
     using socket_ptr = std::shared_ptr<TcpSocket>;
-    Channel(socket_ptr sock, EventLoop* loop)
-     : m_sock(sock), m_registered_events(0), m_triggered_events(0),
-       m_loop(loop), m_read_cb(nullptr), m_write_cb(nullptr),
-       m_close_cb(nullptr) {}
+    Channel(socket_ptr sock, EventLoop *loop)
+        : m_sock(sock), m_registered_events(0), m_triggered_events(0),
+          m_loop(loop), m_read_cb(nullptr), m_write_cb(nullptr),
+          m_close_cb(nullptr) {}
     /* Lifetime of socket fd is owned by TcpSocket.
        So don't close it here.
     */
-    ~Channel() { }
+    ~Channel() {}
     void dispatch_event();
     void set_read_cb(event_cb cb) { m_read_cb = cb; }
     void set_write_cb(event_cb cb) { m_write_cb = cb; }
@@ -43,17 +43,17 @@ public:
         update();
     }
 
-    void unregister_read() { 
-        m_registered_events &= ~READ; 
+    void unregister_read() {
+        m_registered_events &= ~READ;
         update();
     }
 
-    void unregister_write() { 
-        m_registered_events &= ~WRITE; 
+    void unregister_write() {
+        m_registered_events &= ~WRITE;
         update();
     }
 
-    void unregister_all(){
+    void unregister_all() {
         m_registered_events = NONE;
         update();
     }
@@ -62,15 +62,16 @@ public:
     bool write_triggered() const { return m_triggered_events & WRITE; }
     bool read_registered() const { return m_registered_events & READ; }
     bool write_registered() const { return m_registered_events & WRITE; }
-    EventLoop* get_loop() const { return m_loop; }
-private:
+    EventLoop *get_loop() const { return m_loop; }
+
+  private:
     /* Sync epoll internal state after registered events changed.
-    */
+     */
     void update();
     socket_ptr m_sock;
     int m_registered_events;
     int m_triggered_events;
-    EventLoop* const m_loop;
+    EventLoop *const m_loop;
     event_cb m_read_cb;
     event_cb m_write_cb;
     event_cb m_close_cb;
@@ -78,23 +79,20 @@ private:
     static const int READ = EPOLLIN;
     static const int WRITE = EPOLLOUT;
 };
-/* Channel utils. 
+/* Channel utils.
    To store in std::map.
 */
-struct ChannelHash{
-	std::size_t operator()(const std::shared_ptr<Channel> &key) const
-	{ 
-		return std::hash<int>()(key->get_fd());
-	}
+struct ChannelHash {
+    std::size_t operator()(const std::shared_ptr<Channel> &key) const {
+        return std::hash<int>()(key->get_fd());
+    }
 };
 
-struct ChannelCmp
-{
-	bool operator()(const std::shared_ptr<Channel> &lhs, 
-	                const std::shared_ptr<Channel> &rhs) const
-	{
-		return lhs->get_fd() < rhs->get_fd();
-	}
+struct ChannelCmp {
+    bool operator()(const std::shared_ptr<Channel> &lhs,
+                    const std::shared_ptr<Channel> &rhs) const {
+        return lhs->get_fd() < rhs->get_fd();
+    }
 };
 
-}
+} // namespace webserver

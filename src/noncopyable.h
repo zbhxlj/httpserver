@@ -1,18 +1,18 @@
 #pragma once
 
-namespace webserver{
+namespace webserver {
 
 /*  Delete copy.
-*/
-class Noncopyable{
+ */
+class Noncopyable {
 
-public:
-    Noncopyable(const Noncopyable&) = delete;
-    Noncopyable& operator=(const Noncopyable&) = delete;
+  public:
+    Noncopyable(const Noncopyable &) = delete;
+    Noncopyable &operator=(const Noncopyable &) = delete;
 
-protected:
+  protected:
     Noncopyable() = default;
     ~Noncopyable() = default;
 };
 
-}
+} // namespace webserver

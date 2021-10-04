@@ -2,3 +2,4 @@ build
 .ccls-cache
 docs
 .cache
+web_server

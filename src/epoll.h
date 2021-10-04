@@ -1,10 +1,10 @@
-#include <vector>
-#include <unordered_map>
-#include <sys/epoll.h>
-#include <memory>
 #include "noncopyable.h"
+#include <memory>
+#include <sys/epoll.h>
+#include <unordered_map>
+#include <vector>
 
-namespace webserver{ 
+namespace webserver {
 
 class Channel;
 /* A wrapper of epollfd.
@@ -13,7 +13,7 @@ class Channel;
 */
 class Epoll : public Noncopyable {
 
-public:
+  public:
     using channel_ptr = std::shared_ptr<Channel>;
     using channel_vector = std::vector<channel_ptr>;
     Epoll();
@@ -23,13 +23,14 @@ public:
     */
     channel_vector poll(int timeout);
     /* A wrapper of epoll_ctl.
-    */
-    void update_channel(const channel_ptr& channel);
-    void remove_channel(const channel_ptr& channel);
-private:
+     */
+    void update_channel(const channel_ptr &channel);
+    void remove_channel(const channel_ptr &channel);
+
+  private:
     /* Internal used by update_channel.
-    */
-    void update_event(const channel_ptr& channel, int op);
+     */
+    void update_event(const channel_ptr &channel, int op);
     const int m_init_events_size = 16;
     int m_epfd;
     /* Triggered events returned by epoll_wait.
@@ -38,8 +39,8 @@ private:
     std::vector<epoll_event> m_events;
     /* Registered channel saved in a RB-tree.
        Same role as the kernel's RB-tree.
-    */ 
+    */
     std::unordered_map<int, channel_ptr> m_channel_map;
 };
 
-}
+} // namespace webserver
