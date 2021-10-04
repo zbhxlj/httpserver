@@ -211,13 +211,13 @@ namespace webserver{
         
         /* Parse error.
          */
-        // if(m_state != ParseDone)
-        // {
-        //     //bad request 400
-        //     spdlog::info("Parse state = {}", m_state);
-        //     bad_request(400, "bad request");
-        //     return ;
-        // }
+        if(m_state != ParseDone)
+        {
+            //bad request 400
+            spdlog::info("Parse state = {}", m_state);
+            bad_request(400, "bad request");
+            return ;
+        }
         
         if(m_url == "/")
         {

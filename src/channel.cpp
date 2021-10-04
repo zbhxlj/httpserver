@@ -6,26 +6,18 @@ namespace webserver{
        Inspired by redis and libevent.
     */
     void Channel::dispatch_event(){
-        // if(m_triggered_events & EPOLLERR){
-        //     m_triggered_events |= ((READ | WRITE) & m_registered_events);
-        // }
-        // if((m_triggered_events & EPOLLHUP) && !(m_triggered_events & EPOLLRDHUP)){
-        //         m_triggered_events |= ((READ | WRITE) & m_registered_events);
-        // }
-        if(m_triggered_events & EPOLLHUP && !(m_triggered_events & EPOLLIN)){
-            if(m_close_cb) m_close_cb();
-            return;
+        if(m_triggered_events & EPOLLERR){
+            m_triggered_events |= ((READ | WRITE) & m_registered_events);
         }
-        if(m_triggered_events & EPOLLRDHUP){
-            if(m_close_cb) m_close_cb();
-            return;
+        if((m_triggered_events & EPOLLHUP) && !(m_triggered_events & EPOLLRDHUP)){
+                m_triggered_events |= ((READ | WRITE) & m_registered_events);
         }
-        if(m_triggered_events & (READ | EPOLLRDHUP)){
-            if(m_read_cb) m_read_cb();
-        }
-        if(m_triggered_events & WRITE){
-            if(m_write_cb) m_write_cb();
-        }
+        if(m_triggered_events & READ)
+            m_read_cb();
+        if(m_triggered_events & WRITE)
+            m_write_cb();
+        if(m_triggered_events & EPOLLRDHUP)
+            m_close_cb();
     }
 
     void Channel::update(){
