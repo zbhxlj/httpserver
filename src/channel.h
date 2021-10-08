@@ -64,6 +64,10 @@ class Channel : public std::enable_shared_from_this<Channel>,
     bool write_registered() const { return m_registered_events & WRITE; }
     EventLoop *get_loop() const { return m_loop; }
 
+    std::string peer_addr() const { 
+       return m_sock->peer_addr(); 
+    }
+
   private:
     /* Sync epoll internal state after registered events changed.
      */

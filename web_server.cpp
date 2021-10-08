@@ -4,8 +4,9 @@
 #include <filesystem>
 #include <spdlog/spdlog.h>
 int main() {
-    spdlog::set_level(spdlog::level::debug);
+    spdlog::set_level(spdlog::level::info);
     spdlog::set_pattern("[%Y-%m-%d %T.%f] [thread %t] %@  %v");
+    spdlog::info("Config file path : {}", std::filesystem::current_path().string() + "/config.yaml");
     auto config = webserver::load_config(
         std::filesystem::current_path().string() + "/config.yaml");
     webserver::EventLoop main_loop;

@@ -35,6 +35,7 @@ set(http
     src/http_handler.cpp
     src/http_connection.cpp
     src/socket.cpp
+    src/config.cpp
     )
 
 add_library(baselib STATIC ${base})

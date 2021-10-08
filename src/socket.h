@@ -46,6 +46,10 @@ class TcpSocket : public Noncopyable {
     int send(std::string &buf);
     int get_fd() const { return m_socket_fd; }
 
+    std::string peer_addr() const { 
+       return m_addr.to_ip_port_string();
+     }
+
   private:
     int m_socket_fd;
     InetAddr m_addr;

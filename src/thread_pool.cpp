@@ -16,7 +16,7 @@ void ThreadPool::start() {
         m_threads.emplace_back(
             std::make_unique<Thread>([this]() { this->consume_task(); }));
     }
-    spdlog::info("Start thread pool!");
+    spdlog::debug("Start thread pool!");
 }
 
 void ThreadPool::stop() {
@@ -24,7 +24,7 @@ void ThreadPool::stop() {
     for (auto &thread : m_threads) {
         thread->join();
     }
-    spdlog::info("Stop thread pool!");
+    spdlog::debug("Stop thread pool!");
 }
 
 void ThreadPool::add_task(Task task) {

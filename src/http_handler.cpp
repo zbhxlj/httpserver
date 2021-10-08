@@ -1,5 +1,6 @@
 #include "http_handler.h"
 #include "event_loop.h"
+#include "config.h"
 #include "http_connection.h"
 #include <cassert>
 #include <fcntl.h>
@@ -7,7 +8,10 @@
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <unistd.h>
+#include <sstream>
 namespace webserver {
+
+extern WebConfig global_config;
 const char *HttpHandler::Method[] = {"GET"};
 const char *HttpHandler::Version[] = {"HTTP/1.0", "HTTP/1.1"};
 
@@ -65,9 +69,9 @@ void HttpHandler::handle_http_request() {
     int bpos = 0;
 
     std::string buffer = m_connection->get_recv_buffer();
-    spdlog::debug("buf = {}", buffer);
+    spdlog::info("Request message = ");
+    spdlog::info("{}", buffer);
     HttpConnection::ConnState connState = m_connection->get_state();
-    spdlog::debug("state = {}", connState);
     if (connState == HttpConnection::Error) {
         m_state = Start;
         goto __err;
@@ -156,84 +160,76 @@ int HttpHandler::parse_header(std::string &buf, int bpos) {
 }
 
 void HttpHandler::bad_request(int num, const std::string &note) {
-    std::string body;
-    std::string header;
+    std::stringstream body;
+    std::stringstream header;
 
-    header += "HTTP/1.1 " + std::to_string(num) + " " + note + "\r\n";
-    header += "Content-Type: text/html\r\n";
+    header << "HTTP/1.1 " << std::to_string(num) << " " << note << "\r\n";
+    std::string content_type = m_headers["Content-Type"];
+    header << "Content-Type: " << content_type << "\r\n";
 
     if (!m_is_keep_alive)
-        header += "Connection: close\r\n";
+        header << "Connection: close\r\n";
     else
-        header += "Connection: Keep-Alive\r\n";
+        header << "Connection: Keep-Alive\r\n";
 
-    body += "<html><title>呀~出错了</title>";
-    body += "<body>" + std::to_string(num) + " " + note;
-    body += "</body></html>";
+    body << "<html><title>呀~出错了</title>";
+    body << "<body>" + std::to_string(num) + " " + note;
+    body << "</body></html>";
 
-    header += "Content-Length: " + std::to_string(body.size()) + "\r\n";
-    header += "Server: ZBH's HttpServer\r\n\r\n";
+    header << "Content-Length: " + std::to_string(body.str().size()) + "\r\n";
+    header << "Server: ZBH's HttpServer\r\n\r\n";
 
-    spdlog::debug("http response header : {}", header);
-    spdlog::debug("http response body : {}", body);
-    m_connection->send(header);
-    m_connection->send(body);
+    spdlog::info("{}", "HTTP/1.1 " + std::to_string(num) + " " + note);
+    spdlog::debug("http response header : {}", header.str());
+    spdlog::debug("http response body : {}", body.str());
+    m_connection->send(header.str());
+    m_connection->send(body.str());
 }
 
 void HttpHandler::on_request(const std::string &body) {
-    std::string header;
+    std::stringstream header;
 
-    header += "HTTP/1.1 200 OK\r\n";
-    header += "Content-Type: text/html\r\n";
+    header << "HTTP/1.1 200 OK\r\n";
+    std::string content_type = m_headers["Content-Type"];
+    header << "Content-Type: " << content_type << "\r\n";
 
     if (!m_is_keep_alive)
-        header += "Connection: close\r\n";
+        header << "Connection: close\r\n";
     else
-        header += "Connection: Keep-Alive\r\n";
+        header << "Connection: Keep-Alive\r\n";
 
-    header += "Content-Length: " + std::to_string(body.size()) + "\r\n";
-    header += "Server: ZBH's HttpServer\r\n\r\n";
+    header << "Content-Length: " << std::to_string(body.size()) << "\r\n";
+    header << "Server: ZBH's HttpServer\r\n\r\n";
 
-    m_connection->send(header);
+    m_connection->send(header.str());
     m_connection->send(body);
-    spdlog::debug("http response header : {}", header);
+    spdlog::info("{}", "HTTP/1.1 200 OK");
+    spdlog::debug("http response header : {}", header.str());
     spdlog::debug("http response body : {}", body);
 }
 
 void HttpHandler::respond_request() {
-    std::string filename("source/");
+    std::string filename = global_config.index_directory;
     std::string context;
 
     /* Parse error.
      */
     if (m_state != ParseDone) {
         // bad request 400
-        spdlog::info("Parse state = {}", m_state);
+        spdlog::debug("Parse state = {}", m_state);
         bad_request(400, "bad request");
         return;
     }
 
     if (m_url == "/") {
-        filename += "index.html";
+        filename += "/index.html";
     } else {
-        /* Delete leading "/".
-         */
-        std::string path = m_url.substr(1);
-
-        // for webbench test!
-        // TODO
-        // if(path == "hello")
-        // {
-        //     std::string hello("Hello, I'm WebServer.");
-        //     onRequest(hello);
-        //     return ;
-        // }
-        if (::access((filename + path).c_str(), F_OK) < 0) {
-            spdlog::warn("File {} not found", filename + path);
+        filename += m_url;
+        if(::access((filename).c_str(), F_OK) < 0) {
+            spdlog::warn("File {} not found", filename);
             bad_request(404, "Not Found");
             return;
         }
-        filename += path;
     }
 
     /* Fetch resources.
@@ -254,8 +250,8 @@ void HttpHandler::respond_request() {
 
     void *map_file = ::mmap(NULL, st.st_size, PROT_READ, MAP_PRIVATE, fd, 0);
     if (map_file == MAP_FAILED) {
-        spdlog::warn("mmap file {} failed", filename);
-        bad_request(404, "Mmap failed");
+        spdlog::warn("Read file {} failed", filename);
+        bad_request(404, "Read failed");
         return;
     }
 
