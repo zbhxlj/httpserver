@@ -14,7 +14,7 @@ struct WebConfig {
     int poll_timeout;
     WebConfig() = default;
 
-    WebConfig& operator=(const WebConfig&) = default;
+    WebConfig &operator=(const WebConfig &) = default;
     WebConfig(std::string listen_addr, short listen_port,
               std::string index_directory, int thread_pool_num,
               int reserved_task_num, int poll_timeout)

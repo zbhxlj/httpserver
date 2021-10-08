@@ -30,7 +30,8 @@ void HttpManager::add_http_connection(http_handler_ptr &handler) {
     auto &channel = handler->m_connection->get_channel();
     m_http_map.insert({channel, handler});
     handler->new_connection();
-    spdlog::info("Establish new http connection, peer's address = {}", handler->m_conn_fd->peer_addr());
+    spdlog::info("Establish new http connection, peer's address = {}",
+                 handler->m_conn_fd->peer_addr());
 }
 
 void HttpManager::del_http_connection(channel_ptr &channel) {
@@ -38,7 +39,8 @@ void HttpManager::del_http_connection(channel_ptr &channel) {
     if (m_keep_alive_set.find(channel) != m_keep_alive_set.end()) {
         m_keep_alive_set.erase(channel);
     }
-    spdlog::info("Delete http connection, peer's address = {}", channel->peer_addr());
+    spdlog::info("Delete http connection, peer's address = {}",
+                 channel->peer_addr());
 }
 
 void HttpManager::flush_keep_alive(const channel_ptr &channel,

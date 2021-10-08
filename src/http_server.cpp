@@ -66,8 +66,8 @@ void HttpServer::acceptor() {
         next_loop->queue_in_loop(
             std::bind(&EventLoop::add_http_connection, next_loop, handler));
 
-        spdlog::info("New client connected, peer addr = {}, conn_fd = {}", 
-                    conn_sock->peer_addr(), conn_sock->get_fd());
+        spdlog::info("New client connected, peer addr = {}, conn_fd = {}",
+                     conn_sock->peer_addr(), conn_sock->get_fd());
     }
 }
 } // namespace webserver

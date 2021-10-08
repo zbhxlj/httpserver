@@ -1,14 +1,14 @@
 #include "http_handler.h"
-#include "event_loop.h"
 #include "config.h"
+#include "event_loop.h"
 #include "http_connection.h"
 #include <cassert>
 #include <fcntl.h>
 #include <spdlog/spdlog.h>
+#include <sstream>
 #include <sys/mman.h>
 #include <sys/stat.h>
 #include <unistd.h>
-#include <sstream>
 namespace webserver {
 
 extern WebConfig global_config;
@@ -225,7 +225,7 @@ void HttpHandler::respond_request() {
         filename += "/index.html";
     } else {
         filename += m_url;
-        if(::access((filename).c_str(), F_OK) < 0) {
+        if (::access((filename).c_str(), F_OK) < 0) {
             spdlog::warn("File {} not found", filename);
             bad_request(404, "Not Found");
             return;

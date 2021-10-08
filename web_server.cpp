@@ -12,7 +12,7 @@ int main() {
     webserver::EventLoop main_loop;
 
     webserver::HttpServer server(&main_loop, config.listen_addr,
-                                 config.listen_port, 3);
+                                 config.listen_port, 8);
     server.start();
 
     main_loop.loop();

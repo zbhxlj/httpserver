@@ -50,13 +50,14 @@ std::pair<bool, TcpSocket::socket_ptr> TcpSocket::accept() {
 }
 
 void TcpSocket::close() {
-    if(m_socket_fd < 0) return;
+    if (m_socket_fd < 0)
+        return;
     int ret = ::close(m_socket_fd);
-    if(ret < 0){
-        spdlog::warn("Unclean close! socket fd = {} errno = {}", m_socket_fd, ::strerror(errno));
-        }
+    if (ret < 0) {
+        spdlog::warn("Unclean close! socket fd = {} errno = {}", m_socket_fd,
+                     ::strerror(errno));
     }
-    
+}
 
 void TcpSocket::shutdown(int type) {
     int ret = ::shutdown(m_socket_fd, type);
