@@ -3,3 +3,4 @@ build
 docs
 .cache
 web_server
+*.log
